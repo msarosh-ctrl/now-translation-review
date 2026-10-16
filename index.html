@@ -144,7 +144,7 @@ function render(){
   seg($('#pillars'),Object.keys(DATA),st.pillar,v=>{st.pillar=v;render();},v=>(v[0]+v.slice(1).toLowerCase()).replace(/-/g,' '));
   seg($('#langs'),langs,st.lang,v=>{st.lang=v;render();},v=>LANG_NAMES[v]||v);
   seg($('#decks'),decks,st.deck,v=>{st.deck=v;render();});
-  [...$('#decks').children].forEach((b,i)=>{if(reviews[revKey(st.pillar,st.lang,decks[i])]) b.classList.add('ok');});
+  [...$('#decks').children].forEach((b,i)=>{const d=decks[i]; const ls=langs.filter(l=>P[l][d]); if(ls.length&&ls.every(l=>reviews[revKey(st.pillar,l,d)])) b.classList.add('ok');}); /* deck tick only when EVERY language is checked (user, 16 Oct) */
   renderProg(P,langs); renderSignoff();
   const total=Object.values(edits).filter(e=>e.status!=='rejected').length;
   $('#countChip').textContent=total+(total===1?' edit':' edits')+' waiting';
