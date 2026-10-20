@@ -50,6 +50,7 @@ textarea.changed{background:var(--edit-bg);border-color:var(--violet)}
 .saved{font-size:12px;color:var(--green)}
 .err{font-size:12px;color:var(--amber)}
 .empty{padding:40px 0;color:var(--muted)}
+.chgbar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;background:var(--amber-bg);color:var(--amber);border-radius:8px;padding:10px 12px;margin-top:14px;font-size:13px}.chgbar button{font:500 13px var(--f-ui);border:1px solid currentColor;background:transparent;color:inherit;border-radius:7px;padding:5px 10px;cursor:pointer}.slide .no .badge{display:inline-block;margin-top:6px;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);border-radius:999px;padding:1px 8px;font-size:11px;font-weight:600}
 .ro{background:var(--amber-bg);color:var(--amber);padding:10px 12px;border-radius:8px;margin-top:12px;font-size:13px}
 .ro a{color:inherit;font-weight:600}
 .prog{margin:14px 0 6px;overflow-x:auto}
@@ -150,13 +151,23 @@ function render(){
   $('#countChip').textContent=total+(total===1?' edit':' edits')+' waiting';
   const list=$('#list'); list.textContent='';
   let shown=0;
+  // Slides changed since the deck was last ticked (data.json 'chg' date, written by sync.py): show only those unless asked.
+  const rv=reviews[revKey(st.pillar,st.lang,st.deck)]; const deckKey=st.pillar+'_'+st.lang+'_'+st.deck; if(st.fullFor&&st.fullFor!==deckKey) st.fullFor=null;
+  const pend=new Set(P[st.lang][st.deck].filter(s=>s.chg&&!(rv&&(rv.at||'')>=s.chg)).map(s=>s.n));
+  const onlyChanged=pend.size>0&&st.fullFor!==deckKey;
+  if(pend.size){ const bar=document.createElement('div'); bar.className='chgbar'; const m=document.createElement('span');
+    m.textContent=(onlyChanged?'Showing only the changed slides: ':'Changed slides: ')+[...pend].join(', ')+'. Please re-check '+(pend.size===1?'it':'them')+'.';
+    const bt=document.createElement('button'); bt.type='button'; bt.textContent=onlyChanged?'Show full deck':'Show changed slides only';
+    bt.onclick=()=>{ st.fullFor=onlyChanged?deckKey:null; render(); }; bar.append(m,bt); list.appendChild(bar); }
   for(const sl of P[st.lang][st.deck]){
+    if(onlyChanged&&!pend.has(sl.n)) continue;
     const k0=keyOf(st.pillar,st.lang,st.deck,sl.n,0).replace(/_n0$/,'');
     const has=sl.tr.some((_,i)=>edits[keyOf(st.pillar,st.lang,st.deck,sl.n,i)]);
     if(st.only&&!has) continue; shown++;
     const row=document.createElement('section'); row.className='slide';
     row.innerHTML=`<div class="no"><strong>${String(sl.n).padStart(2,'0')}</strong><span></span></div><div class="col en"><h3>English</h3></div><div class="col tr"><h3>${LANG_NAMES[st.lang]||st.lang}</h3></div>`;
     row.querySelector('.no span').textContent=sl.label;
+    if(pend.has(sl.n)){ const bg=document.createElement('span'); bg.className='badge'; bg.textContent='Changed'; row.querySelector('.no').appendChild(bg); }
     const sid=STRIPS[st.lang+'_'+st.deck];
     if(sid){const nS=P[st.lang][st.deck].length; const im=document.createElement('div'); im.className='shot'; im.setAttribute('role','img'); im.setAttribute('aria-label',`Slide ${sl.n}: English left, ${LANG_NAMES[st.lang]} right`);
       im.style.backgroundImage=`url("strips/${sid}")`; im.style.backgroundPosition=`0 ${nS>1?((sl.n-1)/(nS-1)*100):0}%`;
