@@ -103,7 +103,7 @@ const DATA=JSON.parse(document.getElementById('data').textContent);
 const STRIPS={"GERMAN_MS01": "GERMAN_MS01.jpg", "GERMAN_MS02": "GERMAN_MS02.jpg", "GERMAN_MS03": "GERMAN_MS03.jpg", "GERMAN_MS04": "GERMAN_MS04.jpg", "GERMAN_MS05": "GERMAN_MS05.jpg", "SPANISH_MS01": "SPANISH_MS01.jpg", "SPANISH_MS02": "SPANISH_MS02.jpg", "SPANISH_MS03": "SPANISH_MS03.jpg", "SPANISH_MS04": "SPANISH_MS04.jpg", "SPANISH_MS05": "SPANISH_MS05.jpg", "GREEK_MS01": "GREEK_MS01.jpg", "GREEK_MS02": "GREEK_MS02.jpg", "GREEK_MS03": "GREEK_MS03.jpg", "GREEK_MS04": "GREEK_MS04.jpg", "GREEK_MS05": "GREEK_MS05.jpg", "ITALIAN_MS01": "ITALIAN_MS01.jpg", "ITALIAN_MS02": "ITALIAN_MS02.jpg", "ITALIAN_MS03": "ITALIAN_MS03.jpg", "ITALIAN_MS04": "ITALIAN_MS04.jpg", "ITALIAN_MS05": "ITALIAN_MS05.jpg", "JAPANESE_MS01": "JAPANESE_MS01.jpg", "JAPANESE_MS02": "JAPANESE_MS02.jpg", "JAPANESE_MS03": "JAPANESE_MS03.jpg", "JAPANESE_MS04": "JAPANESE_MS04.jpg", "JAPANESE_MS05": "JAPANESE_MS05.jpg", "POLISH_MS01": "POLISH_MS01.jpg", "POLISH_MS02": "POLISH_MS02.jpg", "POLISH_MS03": "POLISH_MS03.jpg", "POLISH_MS04": "POLISH_MS04.jpg", "POLISH_MS05": "POLISH_MS05.jpg", "GERMAN_SH01": "GERMAN_SH01.jpg", "SPANISH_SH01": "SPANISH_SH01.jpg", "GREEK_SH01": "GREEK_SH01.jpg", "ITALIAN_SH01": "ITALIAN_SH01.jpg", "JAPANESE_SH01": "JAPANESE_SH01.jpg", "POLISH_SH01": "POLISH_SH01.jpg", "GERMAN_P01": "GERMAN_P01.jpg", "GERMAN_P02": "GERMAN_P02.jpg", "GERMAN_P03": "GERMAN_P03.jpg", "GERMAN_P04": "GERMAN_P04.jpg", "GERMAN_P05": "GERMAN_P05.jpg", "GERMAN_P06": "GERMAN_P06.jpg", "GERMAN_P07": "GERMAN_P07.jpg", "GERMAN_P08": "GERMAN_P08.jpg", "SPANISH_P01": "SPANISH_P01.jpg", "SPANISH_P02": "SPANISH_P02.jpg", "SPANISH_P03": "SPANISH_P03.jpg", "SPANISH_P04": "SPANISH_P04.jpg", "SPANISH_P05": "SPANISH_P05.jpg", "SPANISH_P06": "SPANISH_P06.jpg", "SPANISH_P07": "SPANISH_P07.jpg", "SPANISH_P08": "SPANISH_P08.jpg", "GREEK_P01": "GREEK_P01.jpg", "GREEK_P02": "GREEK_P02.jpg", "GREEK_P03": "GREEK_P03.jpg", "GREEK_P04": "GREEK_P04.jpg", "GREEK_P05": "GREEK_P05.jpg", "GREEK_P06": "GREEK_P06.jpg", "GREEK_P07": "GREEK_P07.jpg", "GREEK_P08": "GREEK_P08.jpg", "ITALIAN_P01": "ITALIAN_P01.jpg", "ITALIAN_P02": "ITALIAN_P02.jpg", "ITALIAN_P03": "ITALIAN_P03.jpg", "ITALIAN_P04": "ITALIAN_P04.jpg", "ITALIAN_P05": "ITALIAN_P05.jpg", "ITALIAN_P06": "ITALIAN_P06.jpg", "ITALIAN_P07": "ITALIAN_P07.jpg", "ITALIAN_P08": "ITALIAN_P08.jpg", "POLISH_P01": "POLISH_P01.jpg", "POLISH_P02": "POLISH_P02.jpg", "POLISH_P03": "POLISH_P03.jpg", "POLISH_P04": "POLISH_P04.jpg", "POLISH_P05": "POLISH_P05.jpg", "POLISH_P06": "POLISH_P06.jpg", "POLISH_P07": "POLISH_P07.jpg", "POLISH_P08": "POLISH_P08.jpg", "JAPANESE_P01": "JAPANESE_P01.jpg", "JAPANESE_P02": "JAPANESE_P02.jpg", "JAPANESE_P03": "JAPANESE_P03.jpg", "JAPANESE_P04": "JAPANESE_P04.jpg", "JAPANESE_P05": "JAPANESE_P05.jpg", "JAPANESE_P06": "JAPANESE_P06.jpg", "JAPANESE_P07": "JAPANESE_P07.jpg", "JAPANESE_P08": "JAPANESE_P08.jpg"};
 const LANG_NAMES={GERMAN:'German',SPANISH:'Spanish',GREEK:'Greek',ITALIAN:'Italian',JAPANESE:'Japanese',POLISH:'Polish'};
 let st={pillar:Object.keys(DATA)[0],lang:null,deck:null,only:false};
-let edits={}; let reviews={}; let db=null; let canWrite=true; let me=null; let writeOk=true; let notes={};
+let edits={}; let reviews={}; let db=null; let canWrite=true; const LOCKED=new Set(['MINDSET','START-HERE','PROTECT']); let me=null; let writeOk=true; let notes={};
 const API="https://script.google.com/macros/s/AKfycbwYB2DknLE-9LrP-FjwlDjOj0veFA23lYz7yV4Iv2lByWDg7kHU1qrl90-8EQL-JstA_A/exec";
 const TAB={GERMAN:'German',SPANISH:'Spanish',GREEK:'Greek',ITALIAN:'Italian',JAPANESE:'Japanese',POLISH:'Polish'};
 const who=()=>{const el=document.getElementById('who'); return el?el.value.trim():'';};
@@ -151,6 +151,7 @@ function render(){
   const total=Object.values(edits).filter(e=>e.status!=='rejected').length;
   $('#countChip').textContent=total+(total===1?' edit':' edits')+' waiting';
   const list=$('#list'); list.textContent='';
+  if(LOCKED.has(st.pillar)){ const lk=document.createElement('p'); lk.className='ro'; lk.textContent='Final: this section is locked. The videos are done, so no more changes can be made here.'; list.appendChild(lk); }
   let shown=0;
   // Slides changed since the deck was last ticked (data.json 'chg' date, written by sync.py): show only those unless asked.
   const rv=reviews[revKey(st.pillar,st.lang,st.deck)]; const deckKey=st.pillar+'_'+st.lang+'_'+st.deck; if(st.fullFor&&st.fullFor!==deckKey) st.fullFor=null;
@@ -178,13 +179,13 @@ function render(){
     sl.tr.forEach((t,i)=>{
       const k=keyOf(st.pillar,st.lang,st.deck,sl.n,i); const e=edits[k];
       const line=document.createElement('div'); line.className='line';
-      const ta=document.createElement('textarea'); ta.id='t_'+k; ta.rows=1; const cur=e?e.text:t; const dr=dGet(k); if(dr!==null&&dr===cur) dDel(k); const useDr=dr!==null&&dr!==cur; ta.value=useDr?dr:cur; ta.disabled=!canWrite;
+      const ta=document.createElement('textarea'); ta.id='t_'+k; ta.rows=1; const cur=e?e.text:t; const dr=dGet(k); if(dr!==null&&dr===cur) dDel(k); const useDr=dr!==null&&dr!==cur; ta.value=useDr?dr:cur; ta.disabled=!canWrite||LOCKED.has(st.pillar);
       ta.setAttribute('aria-label',`Slide ${sl.n} piece ${i+1}`);
       if(e) ta.classList.add('changed');
       const info=document.createElement('div');
       if(useDr){info.className='err';info.textContent='Not saved yet (kept on this device). Click in the box, then outside it, to save again.';}
       else if(e){info.className='orig';info.innerHTML='Was: <s></s>';info.querySelector('s').textContent=t;}
-      const go=()=>{ if(!canWrite||inflight.has(k)) return; const saved=edits[k]?edits[k].text:t; if(ta.value===saved&&dGet(k)===null) return; save(k,{pillar:st.pillar,lang:st.lang,deck:st.deck,slide:sl.n,label:sl.label,idx:i,orig:t},ta.value,info,ta); };
+      const go=()=>{ if(!canWrite||LOCKED.has(st.pillar)||inflight.has(k)) return; const saved=edits[k]?edits[k].text:t; if(ta.value===saved&&dGet(k)===null) return; save(k,{pillar:st.pillar,lang:st.lang,deck:st.deck,slide:sl.n,label:sl.label,idx:i,orig:t},ta.value,info,ta); };
       ta.addEventListener('blur',go); ta.addEventListener('keydown',ev=>{ if(ev.key==='Enter'&&!ev.isComposing){ ev.preventDefault(); ta.blur(); } }); ta.addEventListener('paste',()=>setTimeout(()=>{ if(/\n/.test(ta.value)){ ta.value=ta.value.replace(/\s*\n\s*/g,' '); ta.dispatchEvent(new Event('input')); } },0)); ta.addEventListener('input',()=>{ const saved=edits[k]?edits[k].text:t; if(ta.value===saved) dDel(k); else dSet(k,ta.value); });
       line.append(ta,info);
       if(sl.miss&&sl.miss.includes(i)){ const pn=document.createElement('div'); pn.className='prop'; pn.textContent='Proposed translation (not in the script): please check it.'; line.appendChild(pn); }
@@ -218,7 +219,7 @@ function renderSignoff(){
   d.append(p,b); box.appendChild(d);
 }
 async function toggleReview(k,on,n){
-  if(!db) return; if(!who()){ needName(); return; }
+  if(LOCKED.has(st.pillar)) return; if(!db) return; if(!who()){ needName(); return; }
   try{ await post({action:'signoff',tab:TAB[st.lang],deck:st.deck,on,by:who()});
     if(on){ reviews[k]={by:who(),at:new Date().toISOString().slice(0,10)}; } else { delete reviews[k]; }
     render();
